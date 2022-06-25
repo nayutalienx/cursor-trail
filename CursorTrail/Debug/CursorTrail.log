@@ -1,0 +1,6 @@
+﻿  CursorTrail.cpp
+C:\Users\nayutalienx\source\repos\CursorTrail\CursorTrail\CursorTrail.cpp(48,43): error C2664: "const GLFWvidmode *glfwGetVideoMode(GLFWmonitor *)": невозможно преобразовать аргумент 1 из "GLFWmonitor *(__cdecl *)(void)" в "GLFWmonitor *"
+C:\Users\nayutalienx\source\repos\CursorTrail\CursorTrail\CursorTrail.cpp(48,22): message : Не существует контекста, в котором такое преобразование возможно
+C:\Users\nayutalienx\source\repos\CursorTrail\CursorTrail\include\GLFW\glfw3.h(2798,28): message : см. объявление "glfwGetVideoMode"
+C:\Users\nayutalienx\source\repos\CursorTrail\CursorTrail\CursorTrail.cpp(55,5): error C2146: синтаксическая ошибка: отсутствие ";" перед идентификатором "glfwWindowHint"
+C:\Users\nayutalienx\source\repos\CursorTrail\CursorTrail\CursorTrail.cpp(93,28): warning C4244: инициализация: преобразование "double" в "float", возможна потеря данных

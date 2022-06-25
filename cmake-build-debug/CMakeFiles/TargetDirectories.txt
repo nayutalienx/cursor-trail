@@ -1,0 +1,3 @@
+C:/Users/nayutalienx/source/repos/CursorTrail/cmake-build-debug/CMakeFiles/CursorTrail.dir
+C:/Users/nayutalienx/source/repos/CursorTrail/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/nayutalienx/source/repos/CursorTrail/cmake-build-debug/CMakeFiles/rebuild_cache.dir

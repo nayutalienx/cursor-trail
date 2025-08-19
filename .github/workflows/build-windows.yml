@@ -33,7 +33,7 @@ jobs:
         $glfwDir = Get-ChildItem -Path "glfw-temp" -Directory | Select-Object -First 1
         Write-Host "GLFW extracted to: $($glfwDir.FullName)"
         Copy-Item "$($glfwDir.FullName)/lib-vc2022/glfw3.lib" "CursorTrail/lib/glfw3_x64.lib" -Force
-        Write-Host "GLFW library copied successfully"
+        Write-Host "GLFW x64 library copied successfully"
         
     - name: Show environment info
       run: |

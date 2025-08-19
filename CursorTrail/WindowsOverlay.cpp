@@ -47,15 +47,15 @@ bool WindowsOverlay::Initialize()
     m_screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
     // Register window class
-    WNDCLASSEX wc = {};
-    wc.cbSize = sizeof(WNDCLASSEX);
+    WNDCLASSEXW wc = {};
+    wc.cbSize = sizeof(WNDCLASSEXW);
     wc.style = CS_HREDRAW | CS_VREDRAW;
     wc.lpfnWndProc = WindowProc;
     wc.hInstance = GetModuleHandle(nullptr);
     wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
     wc.lpszClassName = L"CursorTrailOverlay";
     
-    if (!RegisterClassEx(&wc)) {
+    if (!RegisterClassExW(&wc)) {
         std::cerr << "Failed to register window class" << std::endl;
         GdiplusShutdown(m_gdiplusToken);
         return false;

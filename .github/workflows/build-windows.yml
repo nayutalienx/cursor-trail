@@ -32,7 +32,7 @@ jobs:
         Expand-Archive -Path "glfw.zip" -DestinationPath "glfw-temp"
         $glfwDir = Get-ChildItem -Path "glfw-temp" -Directory | Select-Object -First 1
         Write-Host "GLFW extracted to: $($glfwDir.FullName)"
-        Copy-Item "$($glfwDir.FullName)/lib-vc2022/glfw3.lib" "CursorTrail/lib/glfw3_x64.lib" -Force
+        Copy-Item "$($glfwDir.FullName)/lib-vc2022/glfw3.lib" "CursorTrail/lib/glfw3.lib" -Force
         Write-Host "GLFW x64 library copied successfully"
         
     - name: Show environment info
@@ -43,7 +43,7 @@ jobs:
         Write-Host "MSBuild version:"
         msbuild -version
         Write-Host "GLFW library info:"
-        Get-Item "CursorTrail/lib/glfw3_x64.lib"
+        Get-Item "CursorTrail/lib/glfw3.lib"
         
     - name: Configure CMake
       run: |

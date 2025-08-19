@@ -1,11 +1,13 @@
 #ifdef _WIN32
 
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+
 #include "WindowsOverlay.h"
 #include <iostream>
 #include <cmath>
 #include <algorithm>
-
-#pragma comment(lib, "gdiplus.lib")
 
 using namespace Gdiplus;
 
@@ -199,11 +201,13 @@ void WindowsOverlay::DrawTrail(Graphics& graphics)
             
             // Create a color matrix for alpha blending
             ColorMatrix colorMatrix = {
-                1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-                0.0f, 1.0f, 0.0f, 0.0f, 0.0f,
-                0.0f, 0.0f, 1.0f, 0.0f, 0.0f,
-                0.0f, 0.0f, 0.0f, alpha, 0.0f,
-                0.0f, 0.0f, 0.0f, 0.0f, 1.0f
+                {
+                    {1.0f, 0.0f, 0.0f, 0.0f, 0.0f},
+                    {0.0f, 1.0f, 0.0f, 0.0f, 0.0f},
+                    {0.0f, 0.0f, 1.0f, 0.0f, 0.0f},
+                    {0.0f, 0.0f, 0.0f, alpha, 0.0f},
+                    {0.0f, 0.0f, 0.0f, 0.0f, 1.0f}
+                }
             };
             
             ImageAttributes imageAttributes;

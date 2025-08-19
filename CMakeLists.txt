@@ -46,7 +46,7 @@ endif()
 # Platform-specific OpenGL libraries
 if(WIN32)
     # Windows-specific libraries - use 64-bit GLFW and add GDI+ for Windows overlay
-    set(OpenGlLibs opengl32 gdiplus ${CMAKE_CURRENT_SOURCE_DIR}/CursorTrail/lib/glfw3_x64.lib)
+    set(OpenGlLibs opengl32 gdiplus user32 gdi32 ${CMAKE_CURRENT_SOURCE_DIR}/CursorTrail/lib/glfw3.lib)
 else()
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(GLFW3 REQUIRED glfw3)

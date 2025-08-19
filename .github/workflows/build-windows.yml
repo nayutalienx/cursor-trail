@@ -20,7 +20,7 @@ jobs:
     - name: Setup CMake
       uses: jwlawson/actions-setup-cmake@v1.14
       with:
-        cmake-version: '3.22'
+        cmake-version: 'latest'
         
     - name: Setup MSVC
       uses: microsoft/setup-msbuild@v1.3

@@ -30,7 +30,8 @@ add_executable(CursorTrail
 
 # Platform-specific OpenGL libraries
 if(WIN32)
-    set(OpenGlLibs opengl32)
+    # Windows-specific libraries
+    set(OpenGlLibs opengl32 ${CMAKE_CURRENT_SOURCE_DIR}/CursorTrail/lib/glfw3.lib)
 else()
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(GLFW3 REQUIRED glfw3)

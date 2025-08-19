@@ -17,19 +17,27 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v2
+      
     - name: Setup CMake
-      uses: jwlawson/actions-setup-cmake@v1.14
+      uses: jwlawson/actions-setup-cmake@v2
       with:
         cmake-version: 'latest'
         
-    - name: Setup MSVC
-      uses: microsoft/setup-msbuild@v1.3
-      
+    - name: Show environment info
+      run: |
+        cmake --version
+        Write-Host "Visual Studio installations:"
+        Get-ChildItem "C:\Program Files\Microsoft Visual Studio" -ErrorAction SilentlyContinue
+        Write-Host "MSBuild version:"
+        msbuild -version
+        
     - name: Configure CMake
       run: |
         mkdir build
         cd build
-        cmake .. -G "Visual Studio 17 2022" -A x64
+        cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release
         
     - name: Build project
       run: |
@@ -38,10 +46,12 @@ jobs:
         
     - name: Verify executable exists
       run: |
-        if (Test-Path "build\Release\CursorTrail.exe") {
+        if (Test-Path "build/Release/CursorTrail.exe") {
           Write-Host "Executable built successfully"
-          Get-ChildItem "build\Release\CursorTrail.exe"
+          Get-ChildItem "build/Release/CursorTrail.exe"
         } else {
+          Write-Host "Checking build directory contents:"
+          Get-ChildItem -Recurse build/
           Write-Error "Executable not found!"
           exit 1
         }
@@ -49,12 +59,12 @@ jobs:
     - name: Create artifact directory
       run: |
         mkdir artifacts
-        copy build\Release\CursorTrail.exe artifacts\
-        copy CursorTrail\cursortrail.png artifacts\
-        copy CursorTrail\sprite.frag artifacts\
-        copy CursorTrail\sprite.vs artifacts\
-        echo "Built on $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" > artifacts\BUILD_INFO.txt
-        echo "Commit: ${{ github.sha }}" >> artifacts\BUILD_INFO.txt
+        copy "build/Release/CursorTrail.exe" "artifacts/"
+        copy "CursorTrail/cursortrail.png" "artifacts/"
+        copy "CursorTrail/sprite.frag" "artifacts/"
+        copy "CursorTrail/sprite.vs" "artifacts/"
+        echo "Built on $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" > "artifacts/BUILD_INFO.txt"
+        echo "Commit: ${{ github.sha }}" >> "artifacts/BUILD_INFO.txt"
         
     - name: Upload Windows executable
       uses: actions/upload-artifact@v4

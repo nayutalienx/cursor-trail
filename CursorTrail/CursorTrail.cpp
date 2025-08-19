@@ -24,9 +24,9 @@ int main(int argc, char* argv[])
     glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, true);
     glfwWindowHint(GLFW_FLOATING, true);
 
-    // Improved Windows 11 compatibility - don't steal focus
+    // Improved Windows 11 compatibility - keep focus behavior for proper overlay
     glfwWindowHint(GLFW_VISIBLE, true);
-    glfwWindowHint(GLFW_FOCUS_ON_SHOW, false);  // Changed to false for better Windows 11 compatibility
+    glfwWindowHint(GLFW_FOCUS_ON_SHOW, true);  // Restored to original setting for proper transparency
     glfwWindowHint(GLFW_DECORATED, false);
 
     const GLFWvidmode* mode =  glfwGetVideoMode(glfwGetPrimaryMonitor());
@@ -69,6 +69,9 @@ int main(int argc, char* argv[])
     glViewport(0, 0, gameObject.Width, gameObject.Height);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    // Set clear color to transparent for proper overlay transparency
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
     // initialize game
     // ---------------

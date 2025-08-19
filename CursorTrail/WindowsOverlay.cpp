@@ -1,5 +1,9 @@
 #ifdef _WIN32
 
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include "WindowsOverlay.h"
 #include <iostream>
 #include <cmath>
@@ -58,7 +62,7 @@ bool WindowsOverlay::Initialize()
     }
 
     // Create layered window for transparent overlay
-    m_hwnd = CreateWindowEx(
+    m_hwnd = CreateWindowExW(
         WS_EX_LAYERED | WS_EX_TOPMOST | WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW,
         L"CursorTrailOverlay",
         L"Cursor Trail",
@@ -99,7 +103,7 @@ bool WindowsOverlay::Initialize()
     
     // Create a radial gradient for the trail sprite
     SolidBrush brush(Color(255, 255, 255, 255)); // White with full alpha
-    textureGraphics.FillEllipse(&brush, 0, 0, SPRITE_SIZE, SPRITE_SIZE);
+    textureGraphics.FillEllipse(&brush, 0, 0, static_cast<INT>(SPRITE_SIZE), static_cast<INT>(SPRITE_SIZE));
 
     ShowWindow(m_hwnd, SW_SHOW);
 
@@ -193,7 +197,7 @@ void WindowsOverlay::DrawTrail(Graphics& graphics)
     for (const auto& part : m_trailParts) {
         if (part.time > 0.0f) {
             // Calculate alpha based on remaining time
-            float alpha = std::max(0.0f, std::min(1.0f, part.time / FADE_TIME));
+            float alpha = (std::max)(0.0f, (std::min)(1.0f, part.time / FADE_TIME));
             
             // Create a color matrix for alpha blending
             ColorMatrix colorMatrix = {
@@ -220,7 +224,7 @@ void WindowsOverlay::DrawTrail(Graphics& graphics)
             graphics.DrawImage(
                 m_trailTexture.get(),
                 destRect,
-                0, 0, SPRITE_SIZE, SPRITE_SIZE,
+                0, 0, static_cast<REAL>(SPRITE_SIZE), static_cast<REAL>(SPRITE_SIZE),
                 UnitPixel,
                 &imageAttributes
             );

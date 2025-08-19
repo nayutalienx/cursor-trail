@@ -8,6 +8,7 @@
 #include <iostream>
 #include <cmath>
 #include <algorithm>
+#include <cstdlib>  // For malloc/free
 
 using namespace Gdiplus;
 
@@ -96,14 +97,30 @@ bool WindowsOverlay::Initialize()
     m_hBitmap = CreateDIBSection(m_memDC, &bmi, DIB_RGB_COLORS, &pBits, nullptr, 0);
     m_hOldBitmap = (HBITMAP)SelectObject(m_memDC, m_hBitmap);
 
-    // Load trail texture (create a simple circle texture)
-    m_trailTexture = std::make_unique<Bitmap>(static_cast<INT>(SPRITE_SIZE), static_cast<INT>(SPRITE_SIZE), PixelFormat32bppARGB);
-    Graphics textureGraphics(m_trailTexture.get());
-    textureGraphics.SetSmoothingMode(SmoothingModeAntiAlias);
+    // Load trail texture from the same PNG file used by OpenGL version
+    std::wstring texturePath = L"cursortrail.png";
+    m_trailTexture = std::unique_ptr<Bitmap>(Bitmap::FromFile(texturePath.c_str()));
     
-    // Create a radial gradient for the trail sprite
-    SolidBrush brush(Color(255, 255, 255, 255)); // White with full alpha
-    textureGraphics.FillEllipse(&brush, 0, 0, static_cast<INT>(SPRITE_SIZE), static_cast<INT>(SPRITE_SIZE));
+    if (!m_trailTexture || m_trailTexture->GetLastStatus() != Ok) {
+        std::cout << "Failed to load cursortrail.png, creating fallback texture" << std::endl;
+        // Fallback: Create a simple gradient circle texture
+        m_trailTexture = std::make_unique<Bitmap>(static_cast<INT>(SPRITE_SIZE), static_cast<INT>(SPRITE_SIZE), PixelFormat32bppARGB);
+        Graphics textureGraphics(m_trailTexture.get());
+        textureGraphics.SetSmoothingMode(SmoothingModeAntiAlias);
+        
+        // Create a radial gradient brush for better visual effect
+        GraphicsPath path;
+        path.AddEllipse(0, 0, static_cast<INT>(SPRITE_SIZE), static_cast<INT>(SPRITE_SIZE));
+        PathGradientBrush brush(&path);
+        
+        Color colors[] = { Color(255, 255, 255, 255), Color(0, 255, 255, 255) }; // White center, transparent edge
+        REAL positions[] = { 0.0f, 1.0f };
+        brush.SetInterpolationColors(colors, positions, 2);
+        
+        textureGraphics.FillEllipse(&brush, 0, 0, static_cast<INT>(SPRITE_SIZE), static_cast<INT>(SPRITE_SIZE));
+    } else {
+        std::cout << "Successfully loaded cursortrail.png texture (" << m_trailTexture->GetWidth() << "x" << m_trailTexture->GetHeight() << ")" << std::endl;
+    }
 
     ShowWindow(m_hwnd, SW_SHOW);
 
@@ -120,12 +137,24 @@ void WindowsOverlay::Update()
         TrailPart currentTrail(static_cast<float>(cursorPos.x), static_cast<float>(cursorPos.y), FADE_TIME);
         AddTrailPart(currentTrail);
         UpdateTrail();
+        
+        // Debug output (first few seconds only)
+        static int debugCounter = 0;
+        if (debugCounter < 60) { // Print for first 60 frames only
+            std::cout << "Cursor at: " << cursorPos.x << "," << cursorPos.y << " Trail parts active: ";
+            int activeCount = 0;
+            for (const auto& part : m_trailParts) {
+                if (part.time > 0.0f) activeCount++;
+            }
+            std::cout << activeCount << std::endl;
+            debugCounter++;
+        }
     }
 
-    // Update trail fade times
+    // Update trail fade times - match OpenGL version timing
     for (auto& part : m_trailParts) {
         if (part.time > 0.0f) {
-            part.time -= 0.016f; // Approximate 60fps update
+            part.time -= 0.05f; // Match the OpenGL version fade rate (Game.cpp line 123)
             if (part.time < 0.0f) {
                 part.time = 0.0f;
             }
@@ -167,16 +196,15 @@ void WindowsOverlay::Render()
 {
     if (!m_hwnd || !m_memDC) return;
 
-    // Clear the memory DC with transparent black
-    RECT rect = { 0, 0, m_screenWidth, m_screenHeight };
-    HBRUSH blackBrush = CreateSolidBrush(RGB(0, 0, 0));
-    FillRect(m_memDC, &rect, blackBrush);
-    DeleteObject(blackBrush);
+    // Clear the memory DC with fully transparent pixels using Graphics
+    Graphics clearGraphics(m_memDC);
+    clearGraphics.Clear(Color(0, 0, 0, 0)); // Fully transparent
 
     // Draw trail using GDI+
     Graphics graphics(m_memDC);
     graphics.SetSmoothingMode(SmoothingModeAntiAlias);
     graphics.SetCompositingMode(CompositingModeSourceOver);
+    graphics.SetCompositingQuality(CompositingQualityHighQuality);
     
     DrawTrail(graphics);
 
@@ -196,8 +224,13 @@ void WindowsOverlay::DrawTrail(Graphics& graphics)
 {
     for (const auto& part : m_trailParts) {
         if (part.time > 0.0f) {
-            // Calculate alpha based on remaining time
+            // Calculate alpha based on remaining time (match OpenGL version logic)
             float alpha = (std::max)(0.0f, (std::min)(1.0f, part.time / FADE_TIME));
+            
+            // Scale the texture to match the sprite size
+            float spriteSize = SPRITE_SIZE;
+            float textureWidth = static_cast<float>(m_trailTexture->GetWidth());
+            float textureHeight = static_cast<float>(m_trailTexture->GetHeight());
             
             // Create a color matrix for alpha blending
             ColorMatrix colorMatrix = {
@@ -213,18 +246,18 @@ void WindowsOverlay::DrawTrail(Graphics& graphics)
             ImageAttributes imageAttributes;
             imageAttributes.SetColorMatrix(&colorMatrix);
             
-            // Draw the trail sprite
+            // Draw the trail sprite scaled from the texture size to sprite size
             RectF destRect(
-                part.x - SPRITE_SIZE / 2.0f,
-                part.y - SPRITE_SIZE / 2.0f,
-                SPRITE_SIZE,
-                SPRITE_SIZE
+                part.x - spriteSize / 2.0f,
+                part.y - spriteSize / 2.0f,
+                spriteSize,
+                spriteSize
             );
             
             graphics.DrawImage(
                 m_trailTexture.get(),
                 destRect,
-                0, 0, static_cast<REAL>(SPRITE_SIZE), static_cast<REAL>(SPRITE_SIZE),
+                0, 0, textureWidth, textureHeight,
                 UnitPixel,
                 &imageAttributes
             );

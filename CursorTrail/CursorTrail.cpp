@@ -24,9 +24,9 @@ int main(int argc, char* argv[])
     glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, true);
     glfwWindowHint(GLFW_FLOATING, true);
 
-    // Improved Windows 11 compatibility - keep focus behavior for proper overlay
+    // Improved Windows 11 compatibility - overlay should not take focus
     glfwWindowHint(GLFW_VISIBLE, true);
-    glfwWindowHint(GLFW_FOCUS_ON_SHOW, true);  // Restored to original setting for proper transparency
+    glfwWindowHint(GLFW_FOCUS_ON_SHOW, false);  // Set to false for proper overlay behavior on Windows 11
     glfwWindowHint(GLFW_DECORATED, false);
 
     const GLFWvidmode* mode =  glfwGetVideoMode(glfwGetPrimaryMonitor());

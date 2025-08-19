@@ -4,6 +4,10 @@
 #include "Game.h"
 #include "ResourceManager.h"
 
+#ifdef _WIN32
+#include "WindowsOverlay.h"
+#endif
+
 #include <iostream>
 
 // GLFW function declarations
@@ -14,6 +18,52 @@ Game gameObject;
 
 int main(int argc, char* argv[])
 {
+#ifdef _WIN32
+    // Use Windows-specific overlay implementation for guaranteed top-level transparent overlay
+    std::cout << "Starting Windows overlay mode for guaranteed transparency and top-level display..." << std::endl;
+    
+    WindowsOverlay overlay;
+    if (!overlay.Initialize()) {
+        std::cerr << "Failed to initialize Windows overlay. Falling back to OpenGL mode." << std::endl;
+        // Fall through to OpenGL implementation
+    } else {
+        std::cout << "Windows overlay initialized successfully. Press Ctrl+C to exit." << std::endl;
+        
+        // Main loop for Windows overlay
+        MSG msg = {};
+        auto lastUpdate = GetTickCount64();
+        
+        while (true) {
+            // Process Windows messages
+            while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
+                if (msg.message == WM_QUIT) {
+                    goto cleanup;
+                }
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            }
+            
+            // Update and render at ~60fps
+            auto currentTime = GetTickCount64();
+            if (currentTime - lastUpdate >= 16) { // ~60fps
+                overlay.Update();
+                overlay.Render();
+                lastUpdate = currentTime;
+            }
+            
+            // Small sleep to prevent 100% CPU usage
+            Sleep(1);
+        }
+        
+    cleanup:
+        overlay.Cleanup();
+        return 0;
+    }
+#endif
+
+    // OpenGL implementation (Windows fallback and other platforms)
+    std::cout << "Starting OpenGL mode..." << std::endl;
+    
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);

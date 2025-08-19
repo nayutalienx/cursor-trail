@@ -2,9 +2,17 @@
 #include "SpriteRenderer.h"
 #include "ResourceManager.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
-Game::Game() : State(GAME_ACTIVE)
+
+Game::Game() : State(GAME_ACTIVE), currentIndex(0)
 {
+    // Initialize trail parts array to ensure clean state
+    for (int i = 0; i < MAX_SPRITES; i++) {
+        parts[i] = TrailPart(0.0f, 0.0f, 0.0f);
+    }
 }
 
 Game::~Game()
@@ -37,13 +45,29 @@ const float fadeTime = 1.0;
 
 void Game::Update(GLFWwindow* window)
 {
-
-
     double xpos, ypos;
-    //getting cursor position
+    
+    // Get global cursor position for proper system-wide cursor trail
+    // This fixes the issue on Windows 11 where glfwGetCursorPos returns
+    // window-relative coordinates instead of screen coordinates
+#ifdef _WIN32
+    POINT cursorPos;
+    if (GetCursorPos(&cursorPos)) {
+        xpos = static_cast<double>(cursorPos.x);
+        ypos = static_cast<double>(cursorPos.y);
+    } else {
+        // Fallback to GLFW if Windows API fails
+        glfwGetCursorPos(window, &xpos, &ypos);
+    }
+#else
+    // On non-Windows systems, use GLFW (may need adjustment for Linux/macOS)
     glfwGetCursorPos(window, &xpos, &ypos);
+#endif
 
     TrailPart currentTrail = TrailPart(xpos, ypos, fadeTime);
+
+    // Add the current cursor position to trail
+    this->AddPart(currentTrail);
 
     // interpolate trail
 
@@ -62,17 +86,19 @@ void Game::Update(GLFWwindow* window)
 
     glm::vec2 diff = pos2 - pos1;
     float distance = glm::length(diff);
-    glm::vec2 direction = diff / distance;
-
-    float interval = SPRITE_SIZE / 2.5;
-    float stopAt = distance;
-
-    for (float d = interval; d < stopAt; d += interval) {
-        glm::vec2 ivec = pos1 + (direction * d);
-        this->AddPart(TrailPart(ivec.x, ivec.y, fadeTime));
-    }
     
+    // Avoid division by zero
+    if (distance > 0.0f) {
+        glm::vec2 direction = diff / distance;
 
+        float interval = SPRITE_SIZE / 2.5;
+        float stopAt = distance;
+
+        for (float d = interval; d < stopAt; d += interval) {
+            glm::vec2 ivec = pos1 + (direction * d);
+            this->AddPart(TrailPart(ivec.x, ivec.y, fadeTime));
+        }
+    }
 }
 
 void Game::AddPart(TrailPart part) {

@@ -19,32 +19,37 @@ int main(int argc, char* argv[])
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     
-    // killer hints
+    // Window hints for cursor trail overlay
     glfwWindowHint(GLFW_MOUSE_PASSTHROUGH, true);
     glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, true);
     glfwWindowHint(GLFW_FLOATING, true);
 
-    // Set it always, because in the background render stop working
+    // Improved Windows 11 compatibility - don't steal focus
     glfwWindowHint(GLFW_VISIBLE, true);
-    glfwWindowHint(GLFW_FOCUS_ON_SHOW, true);
+    glfwWindowHint(GLFW_FOCUS_ON_SHOW, false);  // Changed to false for better Windows 11 compatibility
     glfwWindowHint(GLFW_DECORATED, false);
-
-    
 
     const GLFWvidmode* mode =  glfwGetVideoMode(glfwGetPrimaryMonitor());
     gameObject.Width = mode->width;
     gameObject.Height = mode->height;
-
-
 
     #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     #endif
     glfwWindowHint(GLFW_RESIZABLE, false);
 
-    GLFWwindow* window = glfwCreateWindow(gameObject.Width, gameObject.Height, "game", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(gameObject.Width, gameObject.Height, "CursorTrail", nullptr, nullptr);
+    if (!window)
+    {
+        std::cout << "Failed to create GLFW window" << std::endl;
+        glfwTerminate();
+        return -1;
+    }
+    
     glfwMakeContextCurrent(window);
 
+    // Enable vsync to reduce CPU usage
+    glfwSwapInterval(1);
 
     //glfwSetWindowOpacity(window, 0.7);
 
@@ -53,6 +58,7 @@ int main(int argc, char* argv[])
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
         std::cout << "Failed to initialize GLAD" << std::endl;
+        glfwTerminate();
         return -1;
     }
 

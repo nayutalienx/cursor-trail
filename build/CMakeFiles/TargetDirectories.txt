@@ -1,3 +1,0 @@
-/home/runner/work/cursor-trail/cursor-trail/build/CMakeFiles/CursorTrail.dir
-/home/runner/work/cursor-trail/cursor-trail/build/CMakeFiles/edit_cache.dir
-/home/runner/work/cursor-trail/cursor-trail/build/CMakeFiles/rebuild_cache.dir

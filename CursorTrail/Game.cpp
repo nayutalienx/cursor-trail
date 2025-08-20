@@ -71,11 +71,7 @@ void Game::Update(GLFWwindow* window)
 
     TrailPart currentTrail = TrailPart(xpos, ypos, g_config.fadeTime);
 
-    // Add the current cursor position to trail
-    this->AddPart(currentTrail);
-
-    // interpolate trail
-
+    // Calculate previous index BEFORE adding current trail
     int prevIndex;
     if (this->currentIndex != 0) {
         prevIndex = this->currentIndex - 1;
@@ -83,6 +79,11 @@ void Game::Update(GLFWwindow* window)
     else {
         prevIndex = g_config.maxParticles - 1;
     }
+
+    // Add the current cursor position to trail
+    this->AddPart(currentTrail);
+
+    // interpolate trail
 
     TrailPart previousTrail = this->parts[prevIndex];
 

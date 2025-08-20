@@ -9,6 +9,7 @@
 #include <cmath>
 #include <algorithm>
 #include <cstdlib>  // For malloc/free
+#include <vector>   // For std::vector
 
 using namespace Gdiplus;
 
@@ -78,8 +79,8 @@ bool WindowsOverlay::Initialize()
         return false;
     }
 
-    // Set window to be click-through and fully transparent initially
-    SetLayeredWindowAttributes(m_hwnd, RGB(0, 0, 0), 0, LWA_COLORKEY);
+    // Set window to be initially transparent - remove conflicting SetLayeredWindowAttributes call
+    // We'll use UpdateLayeredWindow for all transparency control
 
     // Create memory DC for double buffering
     m_hdc = GetDC(m_hwnd);
@@ -98,31 +99,45 @@ bool WindowsOverlay::Initialize()
     m_hOldBitmap = (HBITMAP)SelectObject(m_memDC, m_hBitmap);
 
     // Load trail texture from the same PNG file used by OpenGL version
-    std::wstring texturePath = L"cursortrail.png";
-    m_trailTexture = std::unique_ptr<Bitmap>(Bitmap::FromFile(texturePath.c_str()));
+    // Try multiple paths to find the texture file
+    std::vector<std::wstring> texturePaths = {
+        L"cursortrail.png",           // Current directory
+        L"CursorTrail\\cursortrail.png", // Relative to project root
+        L"..\\CursorTrail\\cursortrail.png", // From build directory
+        L"..\\..\\CursorTrail\\cursortrail.png" // From nested build directory
+    };
+    
+    m_trailTexture = nullptr;
+    for (const auto& path : texturePaths) {
+        std::wcout << L"Trying to load texture from: " << path << std::endl;
+        m_trailTexture = std::unique_ptr<Bitmap>(Bitmap::FromFile(path.c_str()));
+        if (m_trailTexture && m_trailTexture->GetLastStatus() == Ok) {
+            std::wcout << L"Successfully loaded texture from: " << path << std::endl;
+            break;
+        }
+    }
     
     if (!m_trailTexture || m_trailTexture->GetLastStatus() != Ok) {
-        std::cout << "Failed to load cursortrail.png, creating fallback texture" << std::endl;
-        // Fallback: Create a simple gradient circle texture
-        m_trailTexture = std::make_unique<Bitmap>(static_cast<INT>(SPRITE_SIZE), static_cast<INT>(SPRITE_SIZE), PixelFormat32bppARGB);
+        std::cout << "Failed to load cursortrail.png from all paths, creating fallback texture" << std::endl;
+        // Fallback: Create a more visible texture for debugging
+        m_trailTexture = std::make_unique<Bitmap>(static_cast<INT>(SPRITE_SIZE * 2), static_cast<INT>(SPRITE_SIZE * 2), PixelFormat32bppARGB);
         Graphics textureGraphics(m_trailTexture.get());
         textureGraphics.SetSmoothingMode(SmoothingModeAntiAlias);
         
-        // Create a radial gradient brush for better visual effect
-        GraphicsPath path;
-        path.AddEllipse(0, 0, static_cast<INT>(SPRITE_SIZE), static_cast<INT>(SPRITE_SIZE));
-        PathGradientBrush brush(&path);
+        // Create a more visible solid circle for debugging
+        SolidBrush whiteBrush(Color(255, 255, 255, 255)); // Fully opaque white
+        textureGraphics.FillEllipse(&whiteBrush, 0, 0, static_cast<INT>(SPRITE_SIZE * 2), static_cast<INT>(SPRITE_SIZE * 2));
         
-        Color colors[] = { Color(255, 255, 255, 255), Color(0, 255, 255, 255) }; // White center, transparent edge
-        REAL positions[] = { 0.0f, 1.0f };
-        brush.SetInterpolationColors(colors, positions, 2);
-        
-        textureGraphics.FillEllipse(&brush, 0, 0, static_cast<INT>(SPRITE_SIZE), static_cast<INT>(SPRITE_SIZE));
+        std::cout << "Created fallback white circle texture (" << (SPRITE_SIZE * 2) << "x" << (SPRITE_SIZE * 2) << ")" << std::endl;
     } else {
         std::cout << "Successfully loaded cursortrail.png texture (" << m_trailTexture->GetWidth() << "x" << m_trailTexture->GetHeight() << ")" << std::endl;
     }
 
     ShowWindow(m_hwnd, SW_SHOW);
+    UpdateWindow(m_hwnd);
+    
+    std::cout << "Windows overlay window created and shown successfully!" << std::endl;
+    std::cout << "Screen size: " << m_screenWidth << "x" << m_screenHeight << std::endl;
 
     return true;
 }
@@ -206,6 +221,17 @@ void WindowsOverlay::Render()
     graphics.SetCompositingMode(CompositingModeSourceOver);
     graphics.SetCompositingQuality(CompositingQualityHighQuality);
     
+    // Draw a test circle at screen center for debugging (first 60 frames only)
+    static int testFrames = 0;
+    if (testFrames < 60) {
+        SolidBrush testBrush(Color(128, 255, 0, 0)); // Semi-transparent red
+        float centerX = m_screenWidth / 2.0f;
+        float centerY = m_screenHeight / 2.0f;
+        float testSize = 50.0f;
+        graphics.FillEllipse(&testBrush, centerX - testSize/2, centerY - testSize/2, testSize, testSize);
+        testFrames++;
+    }
+    
     DrawTrail(graphics);
 
     // Update the layered window
@@ -222,13 +248,14 @@ void WindowsOverlay::Render()
 
 void WindowsOverlay::DrawTrail(Graphics& graphics)
 {
+    int drawnCount = 0;
     for (const auto& part : m_trailParts) {
         if (part.time > 0.0f) {
             // Calculate alpha based on remaining time (match OpenGL version logic)
             float alpha = (std::max)(0.0f, (std::min)(1.0f, part.time / FADE_TIME));
             
-            // Scale the texture to match the sprite size
-            float spriteSize = SPRITE_SIZE;
+            // Scale the texture to match the sprite size - make it larger for debugging
+            float spriteSize = SPRITE_SIZE * 3.0f; // Make trail parts larger for visibility
             float textureWidth = static_cast<float>(m_trailTexture->GetWidth());
             float textureHeight = static_cast<float>(m_trailTexture->GetHeight());
             
@@ -261,7 +288,18 @@ void WindowsOverlay::DrawTrail(Graphics& graphics)
                 UnitPixel,
                 &imageAttributes
             );
+            
+            drawnCount++;
         }
+    }
+    
+    // Debug output for first few frames
+    static int frameCount = 0;
+    if (frameCount < 120) { // Print for first 120 frames
+        if (frameCount % 30 == 0) { // Every 30 frames (about twice per second)
+            std::cout << "Frame " << frameCount << ": Drawing " << drawnCount << " trail parts" << std::endl;
+        }
+        frameCount++;
     }
 }
 

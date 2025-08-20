@@ -53,25 +53,19 @@ fadeTime=1.0            # How long particles last (seconds)
 fadeRate=0.05           # How fast particles fade per frame (0.0-1.0)
 spawnFrequency=6.0      # Spawn interval - lower = denser trail (pixels)
 maxParticles=2048       # Maximum number of particles
-
-# Example configurations:
-
-# Dense, long-lasting trail:
-# spawnFrequency=3.0
-# fadeTime=2.0
-# fadeRate=0.03
-# maxParticles=4096
-
-# Sparse, quick-fading trail:
-# spawnFrequency=12.0
-# fadeTime=0.5
-# fadeRate=0.1
-# maxParticles=1024
-
-# Custom texture:
-# texture=my_custom_trail.png
-# spriteSize=25.0
 ```
+
+### Pre-made Configuration Examples
+
+The repository includes several example configurations to get you started:
+
+- **`config.ini`** - Default balanced settings
+- **`config-dense.ini`** - Dense, long-lasting trail with 6000 particles
+- **`config-minimal.ini`** - Subtle, quick-fading minimalist trail
+- **`config-large.ini`** - Large 40px particles with wider spacing
+- **`config-rainbow.ini`** - Guide for using custom colorful textures
+
+Load any example: `CursorTrail.exe --config config-dense.ini`
 
 ### Command Line Options
 

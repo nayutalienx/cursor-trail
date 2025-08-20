@@ -33,7 +33,6 @@ private:
     static LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     void DrawTrail(Gdiplus::Graphics& graphics);
     void AddTrailPart(const TrailPart& part);
-    void UpdateTrail();
     
     HWND m_hwnd;
     HDC m_hdc;
@@ -54,7 +53,6 @@ private:
     // Trail settings
     static constexpr float SPRITE_SIZE = 15.0f;
     static constexpr float FADE_TIME = 1.0f;
-    static constexpr float INTERPOLATION_INTERVAL = SPRITE_SIZE / 2.5f; // Match OpenGL version exactly (6.0f)
 };
 
 #endif // _WIN32

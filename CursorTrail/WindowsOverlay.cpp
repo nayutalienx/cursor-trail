@@ -151,8 +151,33 @@ void WindowsOverlay::Update()
     POINT cursorPos;
     if (GetCursorPos(&cursorPos)) {
         TrailPart currentTrail(static_cast<float>(cursorPos.x), static_cast<float>(cursorPos.y), FADE_TIME);
+        
+        // Add the current cursor position to trail (match OpenGL version exactly)
         AddTrailPart(currentTrail);
-        UpdateTrail();
+        
+        // Interpolate trail between current and previous position ONLY (like OpenGL Game.cpp)
+        size_t prevIndex = (m_currentIndex == 0) ? m_trailParts.size() - 1 : m_currentIndex - 1;
+        const TrailPart& previousTrail = m_trailParts[prevIndex];
+        
+        float dx = currentTrail.x - previousTrail.x;
+        float dy = currentTrail.y - previousTrail.y;
+        float distance = std::sqrt(dx * dx + dy * dy);
+        
+        // Avoid division by zero and match OpenGL logic exactly
+        if (distance > 0.0f) {
+            float dirX = dx / distance;
+            float dirY = dy / distance;
+            
+            // Use same interpolation interval as OpenGL: SPRITE_SIZE / 2.5 = 6.0f
+            float interval = SPRITE_SIZE / 2.5f;
+            float stopAt = distance;
+            
+            for (float d = interval; d < stopAt; d += interval) {
+                float interpX = previousTrail.x + dirX * d;
+                float interpY = previousTrail.y + dirY * d;
+                AddTrailPart(TrailPart(interpX, interpY, FADE_TIME));
+            }
+        }
         
         // Debug output (first few seconds only)
         static int debugCounter = 0;
@@ -174,30 +199,6 @@ void WindowsOverlay::Update()
             if (part.time < 0.0f) {
                 part.time = 0.0f;
             }
-        }
-    }
-}
-
-void WindowsOverlay::UpdateTrail()
-{
-    // Interpolate between trail points for smoother trail
-    size_t prevIndex = (m_currentIndex == 0) ? m_trailParts.size() - 1 : m_currentIndex - 1;
-    
-    const TrailPart& current = m_trailParts[m_currentIndex];
-    const TrailPart& previous = m_trailParts[prevIndex];
-    
-    float dx = current.x - previous.x;
-    float dy = current.y - previous.y;
-    float distance = std::sqrt(dx * dx + dy * dy);
-    
-    if (distance > INTERPOLATION_INTERVAL) {
-        float dirX = dx / distance;
-        float dirY = dy / distance;
-        
-        for (float d = INTERPOLATION_INTERVAL; d < distance; d += INTERPOLATION_INTERVAL) {
-            float interpX = previous.x + dirX * d;
-            float interpY = previous.y + dirY * d;
-            AddTrailPart(TrailPart(interpX, interpY, FADE_TIME));
         }
     }
 }

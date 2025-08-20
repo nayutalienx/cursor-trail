@@ -119,16 +119,17 @@ bool WindowsOverlay::Initialize()
     
     if (!m_trailTexture || m_trailTexture->GetLastStatus() != Ok) {
         std::cout << "Failed to load cursortrail.png from all paths, creating fallback texture" << std::endl;
-        // Fallback: Create a more visible texture for debugging
-        m_trailTexture = std::make_unique<Bitmap>(static_cast<INT>(SPRITE_SIZE * 2), static_cast<INT>(SPRITE_SIZE * 2), PixelFormat32bppARGB);
+        // Fallback: Create texture same size as original (8x8) for consistency
+        const int textureSize = 8; // Match original cursortrail.png dimensions
+        m_trailTexture = std::make_unique<Bitmap>(textureSize, textureSize, PixelFormat32bppARGB);
         Graphics textureGraphics(m_trailTexture.get());
         textureGraphics.SetSmoothingMode(SmoothingModeAntiAlias);
         
-        // Create a more visible solid circle for debugging
+        // Create a simple white circle matching the original texture design
         SolidBrush whiteBrush(Color(255, 255, 255, 255)); // Fully opaque white
-        textureGraphics.FillEllipse(&whiteBrush, 0, 0, static_cast<INT>(SPRITE_SIZE * 2), static_cast<INT>(SPRITE_SIZE * 2));
+        textureGraphics.FillEllipse(&whiteBrush, 0, 0, textureSize, textureSize);
         
-        std::cout << "Created fallback white circle texture (" << (SPRITE_SIZE * 2) << "x" << (SPRITE_SIZE * 2) << ")" << std::endl;
+        std::cout << "Created fallback white circle texture (" << textureSize << "x" << textureSize << ")" << std::endl;
     } else {
         std::cout << "Successfully loaded cursortrail.png texture (" << m_trailTexture->GetWidth() << "x" << m_trailTexture->GetHeight() << ")" << std::endl;
     }
@@ -221,17 +222,6 @@ void WindowsOverlay::Render()
     graphics.SetCompositingMode(CompositingModeSourceOver);
     graphics.SetCompositingQuality(CompositingQualityHighQuality);
     
-    // Draw a test circle at screen center for debugging (first 60 frames only)
-    static int testFrames = 0;
-    if (testFrames < 60) {
-        SolidBrush testBrush(Color(128, 255, 0, 0)); // Semi-transparent red
-        float centerX = m_screenWidth / 2.0f;
-        float centerY = m_screenHeight / 2.0f;
-        float testSize = 50.0f;
-        graphics.FillEllipse(&testBrush, centerX - testSize/2, centerY - testSize/2, testSize, testSize);
-        testFrames++;
-    }
-    
     DrawTrail(graphics);
 
     // Update the layered window
@@ -254,8 +244,8 @@ void WindowsOverlay::DrawTrail(Graphics& graphics)
             // Calculate alpha based on remaining time (match OpenGL version logic)
             float alpha = (std::max)(0.0f, (std::min)(1.0f, part.time / FADE_TIME));
             
-            // Scale the texture to match the sprite size - make it larger for debugging
-            float spriteSize = SPRITE_SIZE * 3.0f; // Make trail parts larger for visibility
+            // Use the same sprite size as the OpenGL version (15 pixels)
+            float spriteSize = SPRITE_SIZE; // Match OpenGL version exactly
             float textureWidth = static_cast<float>(m_trailTexture->GetWidth());
             float textureHeight = static_cast<float>(m_trailTexture->GetHeight());
             
@@ -273,7 +263,8 @@ void WindowsOverlay::DrawTrail(Graphics& graphics)
             ImageAttributes imageAttributes;
             imageAttributes.SetColorMatrix(&colorMatrix);
             
-            // Draw the trail sprite scaled from the texture size to sprite size
+            // Draw the trail sprite at fixed size (same as OpenGL version)
+            // Position sprite centered on the trail point
             RectF destRect(
                 part.x - spriteSize / 2.0f,
                 part.y - spriteSize / 2.0f,

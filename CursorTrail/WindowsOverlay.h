@@ -14,6 +14,7 @@
 #include <vector>
 #include <memory>
 #include "TrailPart.h"
+#include "Config.h"
 
 // Windows-specific overlay implementation for guaranteed top-level transparent overlay
 class WindowsOverlay
@@ -45,14 +46,9 @@ private:
     
     std::vector<TrailPart> m_trailParts;
     size_t m_currentIndex;
-    static const size_t MAX_TRAIL_PARTS = 2048;
     
     std::unique_ptr<Gdiplus::Bitmap> m_trailTexture;
     ULONG_PTR m_gdiplusToken;
-    
-    // Trail settings
-    static constexpr float SPRITE_SIZE = 15.0f;
-    static constexpr float FADE_TIME = 1.0f;
 };
 
 #endif // _WIN32

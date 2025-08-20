@@ -24,8 +24,8 @@ WindowsOverlay::WindowsOverlay()
     , m_currentIndex(0)
     , m_gdiplusToken(0)
 {
-    m_trailParts.reserve(MAX_TRAIL_PARTS);
-    for (size_t i = 0; i < MAX_TRAIL_PARTS; ++i) {
+    m_trailParts.reserve(g_config.maxParticles);
+    for (int i = 0; i < g_config.maxParticles; ++i) {
         m_trailParts.emplace_back(0.0f, 0.0f, 0.0f);
     }
 }
@@ -98,14 +98,26 @@ bool WindowsOverlay::Initialize()
     m_hBitmap = CreateDIBSection(m_memDC, &bmi, DIB_RGB_COLORS, &pBits, nullptr, 0);
     m_hOldBitmap = (HBITMAP)SelectObject(m_memDC, m_hBitmap);
 
-    // Load trail texture from the same PNG file used by OpenGL version
+    // Load trail texture from configuration
     // Try multiple paths to find the texture file
-    std::vector<std::wstring> texturePaths = {
-        L"cursortrail.png",           // Current directory
-        L"CursorTrail\\cursortrail.png", // Relative to project root
-        L"..\\CursorTrail\\cursortrail.png", // From build directory
-        L"..\\..\\CursorTrail\\cursortrail.png" // From nested build directory
-    };
+    std::vector<std::wstring> texturePaths;
+    
+    // Convert config texture path to wide string and add to paths
+    std::wstring configTexture;
+    configTexture.assign(g_config.texturePath.begin(), g_config.texturePath.end());
+    texturePaths.push_back(configTexture);
+    
+    // Also try relative paths for the configured texture
+    std::wstring baseName = configTexture;
+    size_t lastSlash = baseName.find_last_of(L"\\/");
+    if (lastSlash != std::wstring::npos) {
+        baseName = baseName.substr(lastSlash + 1);
+    }
+    
+    texturePaths.push_back(baseName);
+    texturePaths.push_back(L"CursorTrail\\" + baseName);
+    texturePaths.push_back(L"..\\CursorTrail\\" + baseName);
+    texturePaths.push_back(L"..\\..\\CursorTrail\\" + baseName);
     
     m_trailTexture = nullptr;
     for (const auto& path : texturePaths) {
@@ -118,7 +130,7 @@ bool WindowsOverlay::Initialize()
     }
     
     if (!m_trailTexture || m_trailTexture->GetLastStatus() != Ok) {
-        std::cout << "Failed to load cursortrail.png from all paths, creating fallback texture" << std::endl;
+        std::cout << "Failed to load " << g_config.texturePath << " from all paths, creating fallback texture" << std::endl;
         // Fallback: Create texture same size as original (8x8) for consistency
         const int textureSize = 8; // Match original cursortrail.png dimensions
         m_trailTexture = std::make_unique<Bitmap>(textureSize, textureSize, PixelFormat32bppARGB);
@@ -131,7 +143,7 @@ bool WindowsOverlay::Initialize()
         
         std::cout << "Created fallback white circle texture (" << textureSize << "x" << textureSize << ")" << std::endl;
     } else {
-        std::cout << "Successfully loaded cursortrail.png texture (" << m_trailTexture->GetWidth() << "x" << m_trailTexture->GetHeight() << ")" << std::endl;
+        std::cout << "Successfully loaded " << g_config.texturePath << " texture (" << m_trailTexture->GetWidth() << "x" << m_trailTexture->GetHeight() << ")" << std::endl;
     }
 
     ShowWindow(m_hwnd, SW_SHOW);
@@ -150,7 +162,7 @@ void WindowsOverlay::Update()
     // Get global cursor position
     POINT cursorPos;
     if (GetCursorPos(&cursorPos)) {
-        TrailPart currentTrail(static_cast<float>(cursorPos.x), static_cast<float>(cursorPos.y), FADE_TIME);
+        TrailPart currentTrail(static_cast<float>(cursorPos.x), static_cast<float>(cursorPos.y), g_config.fadeTime);
         
         // Add the current cursor position to trail (match OpenGL version exactly)
         AddTrailPart(currentTrail);
@@ -168,14 +180,14 @@ void WindowsOverlay::Update()
             float dirX = dx / distance;
             float dirY = dy / distance;
             
-            // Use same interpolation interval as OpenGL: SPRITE_SIZE / 2.5 = 6.0f
-            float interval = SPRITE_SIZE / 2.5f;
+            // Use configurable interpolation interval
+            float interval = g_config.spawnFrequency;
             float stopAt = distance;
             
             for (float d = interval; d < stopAt; d += interval) {
                 float interpX = previousTrail.x + dirX * d;
                 float interpY = previousTrail.y + dirY * d;
-                AddTrailPart(TrailPart(interpX, interpY, FADE_TIME));
+                AddTrailPart(TrailPart(interpX, interpY, g_config.fadeTime));
             }
         }
         
@@ -192,10 +204,10 @@ void WindowsOverlay::Update()
         }
     }
 
-    // Update trail fade times - match OpenGL version timing
+    // Update trail fade times - use configurable fade rate
     for (auto& part : m_trailParts) {
         if (part.time > 0.0f) {
-            part.time -= 0.05f; // Match the OpenGL version fade rate (Game.cpp line 123)
+            part.time -= g_config.fadeRate;
             if (part.time < 0.0f) {
                 part.time = 0.0f;
             }
@@ -206,7 +218,7 @@ void WindowsOverlay::Update()
 void WindowsOverlay::AddTrailPart(const TrailPart& part)
 {
     m_trailParts[m_currentIndex] = part;
-    m_currentIndex = (m_currentIndex + 1) % MAX_TRAIL_PARTS;
+    m_currentIndex = (m_currentIndex + 1) % g_config.maxParticles;
 }
 
 void WindowsOverlay::Render()
@@ -245,8 +257,8 @@ void WindowsOverlay::DrawTrail(Graphics& graphics)
             // Calculate alpha to match OpenGL version exactly (use time directly as alpha)
             float alpha = (std::max)(0.0f, (std::min)(1.0f, part.time));
             
-            // Use the same sprite size as the OpenGL version (15 pixels)
-            float spriteSize = SPRITE_SIZE; // Match OpenGL version exactly
+            // Use configurable sprite size
+            float spriteSize = g_config.spriteSize;
             float textureWidth = static_cast<float>(m_trailTexture->GetWidth());
             float textureHeight = static_cast<float>(m_trailTexture->GetHeight());
             

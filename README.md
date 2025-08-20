@@ -1,6 +1,6 @@
 # Cursor Trail
 
-A beautiful, customizable cursor trail effect that works across your entire desktop. Features dual rendering engines optimized for different platforms.
+A beautiful, customizable cursor trail effect that works across your entire desktop. Features dual rendering engines optimized for different platforms and extensive customization options.
 
 ![Cursor Trail Demo](cursor_trail.gif)
 
@@ -12,9 +12,10 @@ A beautiful, customizable cursor trail effect that works across your entire desk
   - Linux/macOS: OpenGL-based rendering
 - **True transparency** with no black squares or artifacts
 - **Smooth cursor tracking** with interpolated trail effects
-- **Customizable trail appearance** (size, fade time, opacity)
+- **Extensive customization** - size, texture, fade time, particle count, and more
 - **Low CPU usage** with optimized rendering
 - **Click-through support** - doesn't interfere with other applications
+- **Configuration system** - file-based and command-line options
 
 ## 🎯 Windows 11 Support
 
@@ -24,6 +25,84 @@ This implementation specifically addresses Windows 11 transparency and overlay i
 - ✅ **True transparency** - No black background artifacts
 - ✅ **Proper overlay behavior** - Works as a background overlay, not a full-screen app
 - ✅ **Native Windows integration** - Uses Win32 layered windows for optimal performance
+
+## 🎨 Customization Options
+
+Customize your cursor trail to fit your style:
+
+- **Texture**: Use any PNG image as the trail particle
+- **Size**: Adjust particle size (1-100 pixels)
+- **Spawn Frequency**: Control trail density (lower = denser trail)
+- **Particle Count**: Set maximum number of trail particles (1-10000)
+- **Fade Time**: How long particles last (0.1-10 seconds)
+- **Fade Rate**: How fast particles disappear (0.01-1.0 per frame)
+
+### Configuration File
+
+Create a `config.ini` file in the same directory as the executable:
+
+```ini
+# Cursor Trail Configuration
+
+# Trail appearance
+spriteSize=15.0         # Size of trail particles (pixels)
+texture=cursortrail.png # Path to trail texture image
+
+# Trail behavior
+fadeTime=1.0            # How long particles last (seconds)
+fadeRate=0.05           # How fast particles fade per frame (0.0-1.0)
+spawnFrequency=6.0      # Spawn interval - lower = denser trail (pixels)
+maxParticles=2048       # Maximum number of particles
+
+# Example configurations:
+
+# Dense, long-lasting trail:
+# spawnFrequency=3.0
+# fadeTime=2.0
+# fadeRate=0.03
+# maxParticles=4096
+
+# Sparse, quick-fading trail:
+# spawnFrequency=12.0
+# fadeTime=0.5
+# fadeRate=0.1
+# maxParticles=1024
+
+# Custom texture:
+# texture=my_custom_trail.png
+# spriteSize=25.0
+```
+
+### Command Line Options
+
+Override configuration on-the-fly:
+
+```bash
+# Basic usage
+CursorTrail.exe
+
+# Customize via command line
+CursorTrail.exe --size 30 --particles 4096 --density 3.0
+
+# Load custom config
+CursorTrail.exe --config my_config.ini
+
+# Generate config file
+CursorTrail.exe --save-config my_config.ini
+
+# Show all options
+CursorTrail.exe --help
+```
+
+**Available Parameters:**
+- `--size <value>` - Set sprite size (default: 15)
+- `--texture <path>` - Set texture path (default: cursortrail.png)
+- `--fade-time <value>` - Set fade time (default: 1.0)
+- `--fade-rate <value>` - Set fade rate (default: 0.05)
+- `--density <value>` - Set spawn density (default: 6.0)
+- `--particles <value>` - Set max particles (default: 2048)
+- `--config <file>` - Load config from file
+- `--save-config <file>` - Save current config to file
 
 ## 📥 Download Windows Executable
 
@@ -57,8 +136,20 @@ make
 
 ## 🚀 Usage
 
+### Quick Start
 - **Windows**: Double-click `CursorTrail.exe` - automatically uses native overlay
 - **Linux/macOS**: Run `./CursorTrail` from terminal - uses OpenGL rendering
+
+### Basic Customization
+1. Run with default settings: `CursorTrail.exe`
+2. Try different sizes: `CursorTrail.exe --size 25`
+3. Make it denser: `CursorTrail.exe --density 3.0`
+4. More particles: `CursorTrail.exe --particles 4096`
+
+### Advanced Customization
+1. Create a `config.ini` file in the executable directory
+2. Edit the values to your preference
+3. Run the application - it will automatically load your config
 
 Move your cursor to see the trail effect. To exit, close the application window or press `Ctrl+C`.
 

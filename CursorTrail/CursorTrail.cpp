@@ -3,6 +3,7 @@
 
 #include "Game.h"
 #include "ResourceManager.h"
+#include "Config.h"
 
 #ifdef _WIN32
 #include "WindowsOverlay.h"
@@ -18,6 +19,20 @@ Game gameObject;
 
 int main(int argc, char* argv[])
 {
+    // Initialize configuration system
+    std::cout << "Cursor Trail - Customizable Version" << std::endl;
+    
+    // Try to load config from default file
+    g_config.LoadFromFile("config.ini");
+    
+    // Parse command line arguments (override config file)
+    if (g_config.ParseCommandLine(argc, argv) == false && argc > 1) {
+        // If help was shown or there was an error, exit
+        return 0;
+    }
+    
+    // Print current configuration
+    g_config.PrintConfig();
 #ifdef _WIN32
     // Use Windows-specific overlay implementation for guaranteed top-level transparent overlay
     std::cout << "Starting Windows overlay mode for guaranteed transparency and top-level display..." << std::endl;

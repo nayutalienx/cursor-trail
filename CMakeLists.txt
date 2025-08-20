@@ -29,7 +29,8 @@ if(WIN32)
             CursorTrail/SpriteRenderer.cpp
             CursorTrail/Texture2D.cpp
             CursorTrail/TrailPart.cpp
-            CursorTrail/WindowsOverlay.cpp)
+            CursorTrail/WindowsOverlay.cpp
+            CursorTrail/Config.cpp)
 else()
     add_executable(CursorTrail
             CursorTrail/lib/glad.c
@@ -40,7 +41,8 @@ else()
             CursorTrail/Shader.cpp
             CursorTrail/SpriteRenderer.cpp
             CursorTrail/Texture2D.cpp
-            CursorTrail/TrailPart.cpp)
+            CursorTrail/TrailPart.cpp
+            CursorTrail/Config.cpp)
 endif()
 
 # Platform-specific OpenGL libraries

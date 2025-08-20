@@ -54,7 +54,7 @@ private:
     // Trail settings
     static constexpr float SPRITE_SIZE = 15.0f;
     static constexpr float FADE_TIME = 1.0f;
-    static constexpr float INTERPOLATION_INTERVAL = SPRITE_SIZE / 2.5f;
+    static constexpr float INTERPOLATION_INTERVAL = SPRITE_SIZE; // Increased from SPRITE_SIZE/2.5f to create more discrete sprites
 };
 
 #endif // _WIN32

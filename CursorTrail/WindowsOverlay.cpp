@@ -241,8 +241,8 @@ void WindowsOverlay::DrawTrail(Graphics& graphics)
     int drawnCount = 0;
     for (const auto& part : m_trailParts) {
         if (part.time > 0.0f) {
-            // Calculate alpha based on remaining time (match OpenGL version logic)
-            float alpha = (std::max)(0.0f, (std::min)(1.0f, part.time / FADE_TIME));
+            // Calculate alpha to match OpenGL version exactly (use time directly as alpha)
+            float alpha = (std::max)(0.0f, (std::min)(1.0f, part.time));
             
             // Use the same sprite size as the OpenGL version (15 pixels)
             float spriteSize = SPRITE_SIZE; // Match OpenGL version exactly

@@ -54,7 +54,7 @@ private:
     // Trail settings
     static constexpr float SPRITE_SIZE = 15.0f;
     static constexpr float FADE_TIME = 1.0f;
-    static constexpr float INTERPOLATION_INTERVAL = 2.0f; // Much smaller interval for smoother trail appearance
+    static constexpr float INTERPOLATION_INTERVAL = SPRITE_SIZE / 2.5f; // Match OpenGL version exactly (6.0f)
 };
 
 #endif // _WIN32

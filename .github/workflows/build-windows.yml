@@ -1,0 +1,97 @@
+name: Build Windows Executable
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+  release:
+    types: [created]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v2
+      
+    - name: Setup CMake
+      uses: jwlawson/actions-setup-cmake@v2
+      with:
+        cmake-version: 'latest'
+        
+    - name: Download GLFW
+      run: |
+        Write-Host "Downloading GLFW 3.3.8 for Windows x64..."
+        Invoke-WebRequest -Uri "https://github.com/glfw/glfw/releases/download/3.3.8/glfw-3.3.8.bin.WIN64.zip" -OutFile "glfw.zip"
+        Expand-Archive -Path "glfw.zip" -DestinationPath "glfw-temp"
+        $glfwDir = Get-ChildItem -Path "glfw-temp" -Directory | Select-Object -First 1
+        Write-Host "GLFW extracted to: $($glfwDir.FullName)"
+        Copy-Item "$($glfwDir.FullName)/lib-vc2022/glfw3.lib" "CursorTrail/lib/glfw3.lib" -Force
+        Write-Host "GLFW x64 library copied successfully"
+        
+    - name: Show environment info
+      run: |
+        cmake --version
+        Write-Host "Visual Studio installations:"
+        Get-ChildItem "C:\Program Files\Microsoft Visual Studio" -ErrorAction SilentlyContinue
+        Write-Host "MSBuild version:"
+        msbuild -version
+        Write-Host "GLFW library info:"
+        Get-Item "CursorTrail/lib/glfw3.lib"
+        
+    - name: Configure CMake
+      run: |
+        mkdir build
+        cd build
+        cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release
+        
+    - name: Build project
+      run: |
+        cd build
+        cmake --build . --config Release --verbose
+        
+    - name: Verify executable exists
+      run: |
+        if (Test-Path "build/Release/CursorTrail.exe") {
+          Write-Host "Executable built successfully"
+          Get-ChildItem "build/Release/CursorTrail.exe"
+        } else {
+          Write-Host "Checking build directory contents:"
+          Get-ChildItem -Recurse build/
+          Write-Error "Executable not found!"
+          exit 1
+        }
+        
+    - name: Create artifact directory
+      run: |
+        mkdir artifacts
+        copy "build/Release/CursorTrail.exe" "artifacts/"
+        copy "CursorTrail/cursortrail.png" "artifacts/"
+        copy "CursorTrail/sprite.frag" "artifacts/"
+        copy "CursorTrail/sprite.vs" "artifacts/"
+        echo "Built on $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" > "artifacts/BUILD_INFO.txt"
+        echo "Commit: ${{ github.sha }}" >> "artifacts/BUILD_INFO.txt"
+        
+    - name: Upload Windows executable
+      uses: actions/upload-artifact@v4
+      with:
+        name: cursor-trail-windows-x64
+        path: artifacts/
+        retention-days: 30
+        
+    - name: Upload release asset (if release)
+      if: github.event_name == 'release'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: artifacts/CursorTrail.exe
+        asset_name: CursorTrail-Windows-x64.exe
+        asset_content_type: application/octet-stream

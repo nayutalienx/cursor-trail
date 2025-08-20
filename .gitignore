@@ -1,1 +1,11 @@
 .vs
+build/
+cmake-build-debug/
+Debug/
+Release/
+*.o
+*.exe
+*.lib
+*.dll
+*.so
+*.a

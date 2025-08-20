@@ -164,11 +164,13 @@ void WindowsOverlay::Update()
     if (GetCursorPos(&cursorPos)) {
         TrailPart currentTrail(static_cast<float>(cursorPos.x), static_cast<float>(cursorPos.y), g_config.fadeTime);
         
+        // Calculate previous index BEFORE adding current trail
+        size_t prevIndex = (m_currentIndex == 0) ? m_trailParts.size() - 1 : m_currentIndex - 1;
+        
         // Add the current cursor position to trail (match OpenGL version exactly)
         AddTrailPart(currentTrail);
         
         // Interpolate trail between current and previous position ONLY (like OpenGL Game.cpp)
-        size_t prevIndex = (m_currentIndex == 0) ? m_trailParts.size() - 1 : m_currentIndex - 1;
         const TrailPart& previousTrail = m_trailParts[prevIndex];
         
         float dx = currentTrail.x - previousTrail.x;
